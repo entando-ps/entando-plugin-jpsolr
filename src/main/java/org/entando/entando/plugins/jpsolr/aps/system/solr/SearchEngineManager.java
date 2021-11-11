@@ -28,14 +28,17 @@ import com.agiletec.aps.system.services.lang.Lang;
 import com.agiletec.plugins.jacms.aps.system.services.content.event.PublicContentChangedObserver;
 import com.agiletec.plugins.jacms.aps.system.services.content.model.Content;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import org.entando.entando.aps.system.services.searchengine.SearchEngineFilter;
 import org.entando.entando.ent.exception.EntException;
 import org.entando.entando.ent.util.EntLogging.EntLogFactory;
 import org.entando.entando.ent.util.EntLogging.EntLogger;
 import org.entando.entando.plugins.jpsolr.aps.system.solr.model.ContentTypeSettings;
+import org.entando.entando.plugins.jpsolr.aps.system.solr.model.SolrFacetedContentsResult;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -88,6 +91,7 @@ public class SearchEngineManager extends com.agiletec.plugins.jacms.aps.system.s
         try {
             List<Map<String, Object>> fields = ((ISolrSearchEngineDAOFactory) this.getFactory()).getFields();
             this.checkLangFields(fields);
+            this.refreshBaseFields(fields, null);
             List<SmallEntityType> entityTypes = this.getContentManager().getSmallEntityTypes();
             Map<String, Map<String, Object>> checkedFields = new HashMap<>();
             for (int i = 0; i < entityTypes.size(); i++) {
@@ -219,6 +223,7 @@ public class SearchEngineManager extends com.agiletec.plugins.jacms.aps.system.s
         super.updateFromEntityTypesChanging(event);
         List<Map<String, Object>> fields = ((ISolrSearchEngineDAOFactory) this.getFactory()).getFields();
         this.checkLangFields(fields);
+        this.refreshBaseFields(fields, null);
         if (((IManager) this.getContentManager()).getName().equals(event.getEntityManagerName()) 
                 && event.getOperationCode() != EntityTypesChangingEvent.REMOVE_OPERATION_CODE) {
             String typeCode = event.getNewEntityType().getTypeCode();
@@ -238,6 +243,12 @@ public class SearchEngineManager extends com.agiletec.plugins.jacms.aps.system.s
     public Thread startReloadContentsReferences() throws EntException {
         ((ISolrSearchEngineDAOFactory) this.getFactory()).deleteAllDocuments();
         return super.startReloadContentsReferences();
+    }
+    
+    @Override
+    public SolrFacetedContentsResult searchFacetedEntities(SearchEngineFilter[][] filters, 
+            SearchEngineFilter[] categories, Collection<String> allowedGroups) throws EntException {
+        return ((ISolrSearcherDAO) this.getSearcherDao()).searchFacetedContents(filters, categories, allowedGroups);
     }
 
     protected ILangManager getLangManager() {
