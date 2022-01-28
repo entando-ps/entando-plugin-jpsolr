@@ -47,9 +47,8 @@ INSERT INTO guifragment (code, widgettypecode, plugincode, gui, defaultgui, lock
 					</#list>
 					</@wpfp.url>"><@wpfp.facetNodeTitle escapeXml=true facetNodeCode="${facetNode.key}" /></a>&#32;<abbr class="jpsolr_tree_occurences" title="<@wp.i18n key="jpsolr_OCCURRENCES_FOR" />&#32;<@wpfp.facetNodeTitle escapeXml=true facetNodeCode="${facetNode.key}" />:&#32;${occurrences[facetNode.key]}">${occurrences[facetNode.key]}</abbr>
 				<@wpfp.hasToOpenFacetNode facetNodeCode="${facetNode.key}" requiredFacetsParamName="requiredFacets" occurrencesParamName="occurrences" >
-					<@wp.freemarkerTemplateParameter var="currFacetRootCode" valueName="${facetNode.key}" removeOnEndTag=true >
-					<@wp.fragment code="jpsolr_inc_facetNavTree" escapeXml=false />
-					</@wp.freemarkerTemplateParameter>
+                                        <#assign currFacetRootCode>${facetNode.key}</#assign>
+					<#include "jpsolr_inc_facetNavTree" >
 				</@wpfp.hasToOpenFacetNode>
 				</li>
 			</#if>
@@ -63,7 +62,6 @@ INSERT INTO guifragment (code, widgettypecode, plugincode, gui, defaultgui, lock
 <div class="jpsolr">
 	<h2 class="title"><@wp.i18n key="jpsolr_TITLE_TREE" /></h2>
 	<@wpfp.facetNavTree requiredFacetsParamName="requiredFacets" facetsTreeParamName="facetsForTree" />
-	<@wp.freemarkerTemplateParameter var="occurrences" valueName="occurrences" removeOnEndTag=true >
 	<#list facetsForTree as facetRoot>
 		<h3><@wpfp.facetNodeTitle facetNodeCode="${facetRoot.code}" /></h3>
 		<#if (occurrences[facetRoot.code]??) && (occurrences[facetRoot.code]?has_content)>
@@ -77,9 +75,8 @@ INSERT INTO guifragment (code, widgettypecode, plugincode, gui, defaultgui, lock
 								</#list>
 								</@wpfp.url>"><@wpfp.facetNodeTitle facetNodeCode="${facetNodeCode}" /></a>&#32;<abbr class="jpsolr_tree_occurences" title="<@wp.i18n key="jpsolr_OCCURRENCES_FOR" />&#32;<@wpfp.facetNodeTitle facetNodeCode="${facetNodeCode}" />:&#32;${occurrences[facetNodeCode]}">${occurrences[facetNodeCode]}</abbr>
                                                         <@wpfp.hasToOpenFacetNode facetNodeCode="${facetNodeCode}" requiredFacetsParamName="requiredFacets" occurrencesParamName="occurrences" >
-                                                                <@wp.freemarkerTemplateParameter var="currFacetRootCode" valueName="facetNodeCode" removeOnEndTag=true >
-								<@wp.fragment code="jpsolr_inc_facetNavTree" escapeXml=false />
-								</@wp.freemarkerTemplateParameter>
+                                                                <#assign currFacetRootCode=facetNodeCode>
+								<#include "jpsolr_inc_facetNavTree" >
 							</@wpfp.hasToOpenFacetNode>
 						</li>
 					</#if>
@@ -89,7 +86,6 @@ INSERT INTO guifragment (code, widgettypecode, plugincode, gui, defaultgui, lock
 			<p><abbr title="<@wp.i18n key="jpsolr_EMPTY_TAG" />:&#32;<@wpfp.facetNodeTitle facetNodeCode="${facetRoot.code}" escapeXml=true />">&ndash;</abbr></p>
 		</#if>
 	</#list>
-	</@wp.freemarkerTemplateParameter>
 </div>', 1);
 INSERT INTO guifragment (code, widgettypecode, plugincode, gui, defaultgui, locked) VALUES ('jpsolr_facetResults', 'jpsolr_facetResults', 'jpsolr', NULL, '<#assign wpfp=JspTaglibs["/jpsolr-core"]>
 <#assign wp=JspTaglibs["/aps-core"]>
