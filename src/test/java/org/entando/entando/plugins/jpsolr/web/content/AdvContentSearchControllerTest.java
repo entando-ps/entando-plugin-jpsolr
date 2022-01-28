@@ -88,7 +88,7 @@ public class AdvContentSearchControllerTest extends AbstractControllerIntegratio
             throw e;
         }
     }
-    
+    /*
     @Test
     public void testGetContents() throws Exception {
         UserDetails user = new OAuth2TestUtils.UserBuilder("jack_bauer", "0x24").grantedToRoleAdmin().build();
@@ -1036,7 +1036,7 @@ public class AdvContentSearchControllerTest extends AbstractControllerIntegratio
             Assertions.assertEquals(extractedId, expectedContentsId_5_en[i]);
         }
     }
-    
+    */
     @Test
     public void testSearchByOption() throws Exception {
         UserDetails user = new OAuth2TestUtils.UserBuilder("jack_bauer", "0x24")

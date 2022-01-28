@@ -35,7 +35,6 @@ import org.entando.entando.plugins.jpsolr.aps.system.solr.ISolrSearchEngineManag
 import org.entando.entando.plugins.jpsolr.aps.system.solr.model.SolrFacetedContentsResult;
 import org.entando.entando.plugins.jpsolr.aps.system.solr.model.SolrSearchEngineFilter;
 import org.entando.entando.plugins.jpsolr.web.content.model.AdvRestContentListRequest;
-import org.entando.entando.web.common.model.PagedMetadata;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

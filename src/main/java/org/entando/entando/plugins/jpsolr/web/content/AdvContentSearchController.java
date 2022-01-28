@@ -23,6 +23,7 @@ import javax.servlet.http.HttpSession;
 import org.entando.entando.aps.system.services.searchengine.FacetedContentsResult;
 import org.entando.entando.plugins.jpsolr.aps.system.content.IAdvContentFacetManager;
 import org.entando.entando.plugins.jpsolr.aps.system.solr.model.SolrFacetedContentsResult;
+import org.entando.entando.plugins.jpsolr.web.content.model.SolrContentPagedMetadata;
 import org.entando.entando.plugins.jpsolr.web.content.model.SolrFacetedPagedMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +33,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import org.entando.entando.web.common.model.PagedMetadata;
 import org.entando.entando.web.common.model.PagedRestResponse;
 import org.entando.entando.web.common.model.RestResponse;
 import org.entando.entando.web.common.validator.AbstractPaginationValidator;
@@ -103,7 +103,7 @@ public class AdvContentSearchController {
         this.getPaginationValidator().validateRestListRequest(requestList, String.class);
         SolrFacetedContentsResult facetedResult = this.getAdvContentFacetManager().getFacetedContents(requestList, currentUser);
         List<String> result = facetedResult.getContentsId();
-        PagedMetadata<String> pagedMetadata = new PagedMetadata<>(requestList, facetedResult.getTotalSize());
+        SolrContentPagedMetadata pagedMetadata = new SolrContentPagedMetadata(requestList, facetedResult.getTotalSize());
         pagedMetadata.setBody(result);
         boolean isGuest = (null == currentUser || currentUser.getUsername().equalsIgnoreCase(SystemConstants.GUEST_USER_NAME));
         pagedMetadata.getAdditionalParams().put("guestUser", String.valueOf(isGuest));
