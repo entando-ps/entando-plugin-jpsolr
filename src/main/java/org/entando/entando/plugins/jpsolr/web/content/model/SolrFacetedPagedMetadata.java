@@ -30,7 +30,10 @@ public class SolrFacetedPagedMetadata {
     private int pageSize;
     private int lastPage;
     private int totalItems;
+    
+    @JsonIgnore
     private String sort;
+    @JsonIgnore
     private String direction;
     
     @JsonInclude(Include.NON_NULL)
@@ -84,9 +87,6 @@ public class SolrFacetedPagedMetadata {
         this.setText(req.getText());
         this.setSearchOption(req.getSearchOption());
         this.setIncludeAttachments(req.isIncludeAttachments());
-        this.setLang(req.getLang());
-        this.setLang(req.getLang());
-        this.setLang(req.getLang());
     }
 
     public int getPage() {
@@ -204,7 +204,7 @@ public class SolrFacetedPagedMetadata {
     public void setActualSize(int actualSize) {
         this.actualSize = actualSize;
     }
-
+    
     public Map<String, String> getAdditionalParams() {
         return additionalParams;
     }
@@ -216,14 +216,7 @@ public class SolrFacetedPagedMetadata {
     public void addAdditionalParams(String key, String value) {
         this.additionalParams.put(key, value);
     }
-/*
-    @Override
-    public int hashCode() {
-        int result = Objects.hash(page, pageSize, lastPage, totalItems, sort, direction, actualSize, body);
-        result = 31 * result + Arrays.hashCode(filters);
-        return result;
-    }
-*/
+    
     @Override
     public String toString() {
         return new ToStringBuilder(this)
