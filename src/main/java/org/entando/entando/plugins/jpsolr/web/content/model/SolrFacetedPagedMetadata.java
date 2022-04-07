@@ -204,7 +204,7 @@ public class SolrFacetedPagedMetadata {
     public void setActualSize(int actualSize) {
         this.actualSize = actualSize;
     }
-    
+
     public Map<String, String> getAdditionalParams() {
         return additionalParams;
     }
