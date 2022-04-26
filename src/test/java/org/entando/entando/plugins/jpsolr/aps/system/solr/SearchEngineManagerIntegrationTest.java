@@ -587,6 +587,9 @@ class SearchEngineManagerIntegrationTest {
                 textAttribute.setText((c + c).toUpperCase(), "en"); // note: search by single term
                 this.contentManager.insertOnLineContent(content);
                 ids.add(content.getId());
+                synchronized (this) {
+                    this.wait(500);
+                }
             }
             synchronized (this) {
                 this.wait(3000);
@@ -717,7 +720,7 @@ class SearchEngineManagerIntegrationTest {
             this.waitForSearchEngine();
         }
     }
-
+    
     private void executeTestByNumberRange(List<String> allowedGroup,
             Number start, Number end, List<String> total, int startIndex, int expectedSize) throws Exception {
         SearchEngineManager sem = (SearchEngineManager) this.searchEngineManager;
@@ -867,7 +870,7 @@ class SearchEngineManagerIntegrationTest {
             throw t;
         }
     }
-
+    
     private void verify(List<String> contentsId, String[] array) {
         assertEquals(array.length, contentsId.size());
         for (int i = 0; i < array.length; i++) {
