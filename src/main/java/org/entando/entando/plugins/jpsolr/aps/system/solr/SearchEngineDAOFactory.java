@@ -13,6 +13,7 @@
  */
 package org.entando.entando.plugins.jpsolr.aps.system.solr;
 
+import com.agiletec.aps.system.EntThreadLocal;
 import com.agiletec.aps.system.services.baseconfig.ConfigInterface;
 import com.agiletec.aps.system.services.category.ICategoryManager;
 import com.agiletec.aps.system.services.lang.ILangManager;
@@ -21,6 +22,9 @@ import com.agiletec.plugins.jacms.aps.system.services.searchengine.ISearchEngine
 import com.agiletec.plugins.jacms.aps.system.services.searchengine.ISearcherDAO;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
+import org.entando.entando.aps.system.services.tenant.ITenantManager;
+import org.entando.entando.aps.system.services.tenant.TenantConfig;
 import org.entando.entando.ent.exception.EntException;
 import org.entando.entando.ent.util.EntLogging.EntLogFactory;
 import org.entando.entando.ent.util.EntLogging.EntLogger;
@@ -35,6 +39,9 @@ public class SearchEngineDAOFactory implements ISearchEngineDAOFactory, ISolrSea
 
     private static final EntLogger logger = EntLogFactory.getSanitizedLogger(SearchEngineDAOFactory.class);
     
+    private static final String SOLR_ADDRESS_TENANT_PARAM = "solrAddress";
+    private static final String SOLR_CORE_TENANT_PARAM = "solrCore";
+    
     @Value("${SOLR_ADDRESS:http://localhost:8983/solr}")
     private String solrAddress;
     
@@ -44,6 +51,7 @@ public class SearchEngineDAOFactory implements ISearchEngineDAOFactory, ISolrSea
     private ConfigInterface configManager;
     private ILangManager langManager;
     private ICategoryManager categoryManager;
+    private ITenantManager tenantManager;
 
     @Override
     public void init() throws Exception {
@@ -52,27 +60,32 @@ public class SearchEngineDAOFactory implements ISearchEngineDAOFactory, ISolrSea
 
     @Override
     public List<Map<String, Object>> getFields() {
-        return SolrSchemaClient.getFields(this.solrAddress, this.solrCore);
+        TenantConfig config = this.getTenantConfig();
+        return SolrSchemaClient.getFields(this.getSolrAddress(config), this.getSolrCore(config));
     }
 
     @Override
     public boolean addField(Map<String, Object> properties) {
-        return SolrSchemaClient.addField(this.solrAddress, this.solrCore, properties);
+        TenantConfig config = this.getTenantConfig();
+        return SolrSchemaClient.addField(this.getSolrAddress(config), this.getSolrCore(config), properties);
     }
 
     @Override
     public boolean replaceField(Map<String, Object> properties) {
-        return SolrSchemaClient.replaceField(this.solrAddress, this.solrCore, properties);
+        TenantConfig config = this.getTenantConfig();
+        return SolrSchemaClient.replaceField(this.getSolrAddress(config), this.getSolrCore(config), properties);
     }
 
     @Override
     public boolean deleteField(String fieldKey) {
-        return SolrSchemaClient.deleteField(this.solrAddress, this.solrCore, fieldKey);
+        TenantConfig config = this.getTenantConfig();
+        return SolrSchemaClient.deleteField(this.getSolrAddress(config), this.getSolrCore(config), fieldKey);
     }
 
     @Override
     public boolean deleteAllDocuments() {
-        return SolrSchemaClient.deleteAllDocuments(this.solrAddress, this.solrCore);
+        TenantConfig config = this.getTenantConfig();
+        return SolrSchemaClient.deleteAllDocuments(this.getSolrAddress(config), this.getSolrCore(config));
     }
     
     @Override
@@ -83,21 +96,23 @@ public class SearchEngineDAOFactory implements ISearchEngineDAOFactory, ISolrSea
 
     @Override
     public IIndexerDAO getIndexer() throws EntException {
+        TenantConfig config = this.getTenantConfig();
         IndexerDAO indexerDao = new IndexerDAO();
         indexerDao.setLangManager(this.getLangManager());
         indexerDao.setTreeNodeManager(this.getCategoryManager());
-        indexerDao.setSolrAddress(this.solrAddress);
-        indexerDao.setSolrCore(this.solrCore);
+        indexerDao.setSolrAddress(this.getSolrAddress(config));
+        indexerDao.setSolrCore(this.getSolrCore(config));
         return indexerDao;
     }
 
     @Override
     public ISearcherDAO getSearcher() throws EntException {
+        TenantConfig config = this.getTenantConfig();
         SearcherDAO searcherDao = new SearcherDAO();
         searcherDao.setTreeNodeManager(this.getCategoryManager());
         searcherDao.setLangManager(this.getLangManager());
-        searcherDao.setSolrAddress(this.solrAddress);
-        searcherDao.setSolrCore(this.solrCore);
+        searcherDao.setSolrAddress(this.getSolrAddress(config));
+        searcherDao.setSolrCore(this.getSolrCore(config));
         return searcherDao;
     }
 
@@ -121,6 +136,30 @@ public class SearchEngineDAOFactory implements ISearchEngineDAOFactory, ISolrSea
     public void deleteSubDirectory(String subDirectory) {
         // nothing to do
     }
+
+    public String getSolrAddress(TenantConfig config) {
+        return this.getTenantParameter(config, SOLR_ADDRESS_TENANT_PARAM, this.solrAddress);
+    }
+
+    public String getSolrCore(TenantConfig config) {
+        return this.getTenantParameter(config, SOLR_CORE_TENANT_PARAM, this.solrCore);
+    }
+    
+    private String getTenantParameter(TenantConfig config, String paramName, String inCaseOfNull) {
+        if (null != config) {
+            return config.getProperty(paramName);
+        }
+        return inCaseOfNull;
+    }
+    
+    private TenantConfig getTenantConfig() {
+        String tenantCode = (String) EntThreadLocal.get(ITenantManager.THREAD_LOCAL_TENANT_CODE);
+        TenantConfig config = null;
+        if (!StringUtils.isBlank(tenantCode)) {
+            config = this.getTenantManager().getConfig(tenantCode);
+        }
+        return config;
+    }
     
     protected ConfigInterface getConfigManager() {
         return configManager;
@@ -142,5 +181,12 @@ public class SearchEngineDAOFactory implements ISearchEngineDAOFactory, ISolrSea
     public void setCategoryManager(ICategoryManager categoryManager) {
         this.categoryManager = categoryManager;
     }
-
+    
+    protected ITenantManager getTenantManager() {
+        return tenantManager;
+    }
+    public void setTenantManager(ITenantManager tenantManager) {
+        this.tenantManager = tenantManager;
+    }
+    
 }
