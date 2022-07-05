@@ -36,7 +36,6 @@ import com.agiletec.aps.system.common.tree.ITreeNode;
 import com.agiletec.aps.system.services.category.Category;
 import com.agiletec.aps.system.services.category.ICategoryManager;
 import com.agiletec.aps.system.services.group.Group;
-import com.agiletec.aps.system.services.lang.ILangManager;
 import com.agiletec.aps.util.DateConverter;
 import com.agiletec.plugins.jacms.aps.system.services.content.IContentManager;
 import com.agiletec.plugins.jacms.aps.system.services.content.model.Content;
@@ -664,7 +663,8 @@ class SearchEngineManagerIntegrationTest {
             newNumberAttribute.setIndexingType(IndexableAttributeInterface.INDEXING_TYPE_TEXT);
             artType.addAttribute(newNumberAttribute);
             ((IEntityTypesConfigurer) this.contentManager).updateEntityPrototype(artType);
-
+            this.waitForSearchEngine();
+            
             for (int i = 0; i < 30; i++) {
                 Content content = this.contentManager.loadContent("ART104", true);
                 content.setId(null);
