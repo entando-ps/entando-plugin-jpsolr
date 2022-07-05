@@ -5,11 +5,11 @@
     <parent>
         <groupId>org.entando</groupId>
         <artifactId>entando-core-parent</artifactId>
-        <version>6.3.13</version>
+        <version>6.5.0-MT</version>
     </parent>
     <artifactId>entando-plugin-jpsolr</artifactId>
     <groupId>org.entando.entando.plugins</groupId>
-    <version>6.5.0</version>
+    <version>6.5.0-MT</version>
     <packaging>war</packaging>
     <name>Entando Plugin: Solr Connector</name>
     <description>Enables the use of Solr as search engine</description>
@@ -107,7 +107,7 @@
             <dependency>
                 <groupId>org.entando</groupId>
                 <artifactId>entando-core-bom</artifactId>
-                <version>6.5.0-ECS-211</version>
+                <version>6.5.0-MT</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
