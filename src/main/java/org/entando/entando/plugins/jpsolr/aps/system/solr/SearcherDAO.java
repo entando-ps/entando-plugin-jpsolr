@@ -73,13 +73,13 @@ public class SearcherDAO implements ISolrSearcherDAO {
     @Override
     public List<String> searchContentsId(SearchEngineFilter[] filters,
             SearchEngineFilter[] categories, Collection<String> allowedGroups) throws EntException {
-        return this.searchContents(filters, categories, allowedGroups, false).getContentsId();
+        return this.searchFacetedContents(filters, categories, allowedGroups, false).getContentsId();
     }
 
     @Override
     public SolrFacetedContentsResult searchFacetedContents(SearchEngineFilter[] filters,
             SearchEngineFilter[] categories, Collection<String> allowedGroups) throws EntException {
-        return this.searchContents(filters, categories, allowedGroups, true);
+        return this.searchFacetedContents(filters, categories, allowedGroups, true);
     }
 
     @Override
@@ -102,24 +102,31 @@ public class SearcherDAO implements ISolrSearcherDAO {
         } else {
             query = this.createDoubleQuery(filters, categories, allowedGroups);
         }
-        return this.executeQuery(query, singleFilters, true);
+        return this.executeQuery(query, singleFilters, filterForPagination, true);
     }
-
+    
+    @Deprecated
     protected SolrFacetedContentsResult searchContents(SearchEngineFilter[] filters,
             SearchEngineFilter[] categories, Collection<String> allowedGroups, boolean faceted) throws EntException {
+        return this.searchFacetedContents(filters, categories, allowedGroups, faceted);
+    }
+
+    protected SolrFacetedContentsResult searchFacetedContents(SearchEngineFilter[] filters,
+            SearchEngineFilter[] categories, Collection<String> allowedGroups, boolean faceted) throws EntException {
         Query query = null;
-        if ((null == filters || filters.length == 0)
+        SearchEngineFilter filterForPagination = this.extractPaginationFilter(filters);
+        if ((null == filters || filters.length == 0 || (filters.length == 1 && null != filterForPagination))
                 && (null == categories || categories.length == 0)
                 && (allowedGroups != null && allowedGroups.contains(Group.ADMINS_GROUP_NAME))) {
             query = new MatchAllDocsQuery();
         } else {
             query = this.createQuery(filters, categories, allowedGroups);
         }
-        return this.executeQuery(query, filters, faceted);
+        return this.executeQuery(query, filters, filterForPagination, faceted);
     }
 
     protected SolrFacetedContentsResult executeQuery(Query query,
-            SearchEngineFilter[] filters, boolean faceted) throws EntException {
+            SearchEngineFilter[] filters, SearchEngineFilter filterForPagination, boolean faceted) throws EntException {
         SolrFacetedContentsResult result = new SolrFacetedContentsResult();
         List<String> contentsId = new ArrayList<>();
         Map<String, Integer> occurrences = new HashMap<>();
@@ -129,9 +136,7 @@ public class SearcherDAO implements ISolrSearcherDAO {
         try {
             SolrQuery solrQuery = new SolrQuery(query.toString());
             solrQuery.addField(SolrFields.SOLR_CONTENT_ID_FIELD_NAME);
-            SearchEngineFilter filterForPagination = (null != filters)
-                    ? Arrays.asList(filters).stream().filter(f -> (null != f.getLimit() && f.getLimit() > 0
-                    && null != f.getOffset() && f.getOffset() > -1)).findAny().orElse(null) : null;
+            filterForPagination = (null != filterForPagination) ? filterForPagination : this.extractPaginationFilter(filters);
             if (null != filterForPagination) {
                 solrQuery.setStart(filterForPagination.getOffset());
                 solrQuery.setRows(filterForPagination.getLimit());
