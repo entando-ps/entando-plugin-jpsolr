@@ -30,6 +30,7 @@ import com.agiletec.aps.system.ApsSystemUtils;
 import com.agiletec.apsadmin.portal.specialwidget.SimpleWidgetConfigAction;
 import com.agiletec.plugins.jacms.aps.system.services.content.IContentManager;
 import com.agiletec.plugins.jacms.aps.system.services.content.model.SmallContentType;
+import org.entando.entando.aps.system.services.widgettype.WidgetType;
 import org.entando.entando.plugins.jpsolr.aps.system.JpSolrSystemConstants;
 import org.entando.entando.plugins.jpsolr.apsadmin.portal.specialwidget.util.FacetNavWidgetHelper;
 
@@ -148,7 +149,8 @@ public class FacetNavResultWidgetAction extends SimpleWidgetConfigAction {
 	 * @return the Widget type parameter
 	 */
 	public WidgetTypeParameter getWidgetTypeParameter(String paramName) {
-		List<WidgetTypeParameter> parameters = this.getWidget().getType().getTypeParameters();
+        WidgetType type = this.getWidgetTypeManager().getWidgetType(this.getWidget().getTypeCode());
+		List<WidgetTypeParameter> parameters = type.getTypeParameters();
 		for (WidgetTypeParameter param : parameters) {
 			if (param.getName().equals(paramName)) {
 				return param;
