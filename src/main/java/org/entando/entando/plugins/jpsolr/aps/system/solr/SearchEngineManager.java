@@ -13,10 +13,6 @@
  */
 package org.entando.entando.plugins.jpsolr.aps.system.solr;
 
-import static com.agiletec.plugins.jacms.aps.system.services.searchengine.ICmsSearchEngineManager.STATUS_NEED_TO_RELOAD_INDEXES;
-import static com.agiletec.plugins.jacms.aps.system.services.searchengine.ICmsSearchEngineManager.STATUS_READY;
-import static com.agiletec.plugins.jacms.aps.system.services.searchengine.ICmsSearchEngineManager.STATUS_RELOADING_INDEXES_IN_PROGRESS;
-
 import org.entando.entando.plugins.jpsolr.aps.system.solr.model.SolrFields;
 import com.agiletec.aps.system.common.IManager;
 import com.agiletec.aps.system.common.entity.event.EntityTypesChangingEvent;
@@ -34,6 +30,7 @@ import com.agiletec.plugins.jacms.aps.system.services.content.event.PublicConten
 import com.agiletec.plugins.jacms.aps.system.services.content.model.Content;
 import com.agiletec.plugins.jacms.aps.system.services.searchengine.ICmsSearchEngineManager;
 import com.agiletec.plugins.jacms.aps.system.services.searchengine.IIndexerDAO;
+import com.agiletec.plugins.jacms.aps.system.services.searchengine.ISearcherDAO;
 import com.agiletec.plugins.jacms.aps.system.services.searchengine.LastReloadInfo;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import org.entando.entando.aps.system.services.searchengine.SearchEngineFilter;
 import org.entando.entando.ent.exception.EntException;
+import org.entando.entando.ent.exception.EntRuntimeException;
 import org.entando.entando.ent.util.EntLogging.EntLogFactory;
 import org.entando.entando.ent.util.EntLogging.EntLogger;
 import org.entando.entando.plugins.jpsolr.aps.system.solr.model.ContentTypeSettings;
@@ -58,9 +56,36 @@ public class SearchEngineManager extends com.agiletec.plugins.jacms.aps.system.s
     
     private static final EntLogger logger = EntLogFactory.getSanitizedLogger(SearchEngineManager.class);
     
+    private static final String PRIMARY_KEY = "PRIMARY_MAP_KEY";
+    
     @Autowired
     private ILangManager langManager;
+    
+    @Override
+    public void init() throws Exception {
+        logger.debug("{} ready. Initialized", this.getClass().getName());
+    }
+    
+    @Override
+    protected ISearcherDAO getSearcherDao() {
+        try {
+            return this.getFactory().getSearcher();
+        } catch (Exception e) {
+            logger.error("Error extracting searcher", e);
+            throw new EntRuntimeException("Error extracting searcher", e);
+        }
+    }
 
+    @Override
+    protected IIndexerDAO getIndexerDao() {
+        try {
+            return this.getFactory().getIndexer();
+        } catch (Exception e) {
+            logger.error("Error extracting indexer", e);
+            throw new EntRuntimeException("Error extracting indexer", e);
+        }
+    }
+    
     @Override
     public List<ContentTypeSettings> getContentTypesSettings() throws EntException {
         List<ContentTypeSettings> list = new ArrayList<>();
