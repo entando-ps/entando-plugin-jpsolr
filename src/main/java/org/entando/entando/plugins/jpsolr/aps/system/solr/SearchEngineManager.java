@@ -13,6 +13,7 @@
  */
 package org.entando.entando.plugins.jpsolr.aps.system.solr;
 
+import com.agiletec.aps.system.EntThreadLocal;
 import org.entando.entando.plugins.jpsolr.aps.system.solr.model.SolrFields;
 import com.agiletec.aps.system.common.IManager;
 import com.agiletec.aps.system.common.entity.event.EntityTypesChangingEvent;
@@ -39,7 +40,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
+import org.entando.entando.aps.system.services.cache.ICacheInfoManager;
 import org.entando.entando.aps.system.services.searchengine.SearchEngineFilter;
+import org.entando.entando.aps.system.services.tenant.ITenantManager;
 import org.entando.entando.ent.exception.EntException;
 import org.entando.entando.ent.exception.EntRuntimeException;
 import org.entando.entando.ent.util.EntLogging.EntLogFactory;
@@ -56,10 +60,13 @@ public class SearchEngineManager extends com.agiletec.plugins.jacms.aps.system.s
     
     private static final EntLogger logger = EntLogFactory.getSanitizedLogger(SearchEngineManager.class);
     
-    private static final String PRIMARY_KEY = "PRIMARY_MAP_KEY";
+    private static final String LAST_RELOAD_CACHE_PARAM_NAME = "SolrSearchEnhine_lastReloadInfo";
     
     @Autowired
     private ILangManager langManager;
+    
+    @Autowired
+    private ICacheInfoManager cacheInfoManager;
     
     @Override
     public void init() throws Exception {
@@ -311,10 +318,24 @@ public class SearchEngineManager extends com.agiletec.plugins.jacms.aps.system.s
             SearchEngineFilter[] categories, Collection<String> allowedGroups) throws EntException {
         return ((ISolrSearcherDAO) this.getSearcherDao()).searchFacetedContents(filters, categories, allowedGroups);
     }
-
+    
     @Override
     protected void notifyEndingIndexLoading(LastReloadInfo info, IIndexerDAO newIndexerDAO) {
-        super.notifyEndingIndexLoading(info, newIndexerDAO);
+        this.getCacheInfoManager().putInCache(ICacheInfoManager.DEFAULT_CACHE_NAME, this.getLastReloadCacheKey(), info);
+        if (this.getStatus() != STATUS_NEED_TO_RELOAD_INDEXES) {
+            this.setStatus(STATUS_READY);
+        }
+    }
+
+    @Override
+    public LastReloadInfo getLastReloadInfo() {
+        return (SolrLastReloadInfo) this.getCacheInfoManager().getFromCache(ICacheInfoManager.DEFAULT_CACHE_NAME, this.getLastReloadCacheKey());
+    }
+    
+    private String getLastReloadCacheKey() {
+        String tenantCode = (String) EntThreadLocal.get(ITenantManager.THREAD_LOCAL_TENANT_CODE);
+        String suffix = (StringUtils.isBlank(tenantCode)) ? "_primary_" : tenantCode;
+        return LAST_RELOAD_CACHE_PARAM_NAME + "_" + suffix;
     }
 
     @Override
@@ -327,6 +348,13 @@ public class SearchEngineManager extends com.agiletec.plugins.jacms.aps.system.s
     }
     public void setLangManager(ILangManager langManager) {
         this.langManager = langManager;
+    }
+
+    protected ICacheInfoManager getCacheInfoManager() {
+        return cacheInfoManager;
+    }
+    public void setCacheInfoManager(ICacheInfoManager cacheInfoManager) {
+        this.cacheInfoManager = cacheInfoManager;
     }
     
 }
