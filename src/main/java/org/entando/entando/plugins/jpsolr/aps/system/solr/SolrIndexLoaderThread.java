@@ -51,8 +51,10 @@ public class SolrIndexLoaderThread extends EntThread {
 	@Override
 	public void run() {
         super.applyLocalMap();
-        SolrLastReloadInfo reloadInfo = (StringUtils.isBlank(this.getTypeCode()) || (null == this._searchEngineManager.getLastReloadInfo())) ?
-                new SolrLastReloadInfo() : (SolrLastReloadInfo) this._searchEngineManager.getLastReloadInfo();
+        SolrLastReloadInfo reloadInfo = (SolrLastReloadInfo) this._searchEngineManager.getLastReloadInfo();
+        if (null == reloadInfo) {
+            reloadInfo = new SolrLastReloadInfo();
+        }
 		try {
 			this.loadNewIndex();
 			reloadInfo.setResult(LastReloadInfo.ID_SUCCESS_RESULT);
@@ -61,7 +63,7 @@ public class SolrIndexLoaderThread extends EntThread {
 			_logger.error("error in run", t);
 		} finally {
             if (!StringUtils.isBlank(this.getTypeCode())) {
-                reloadInfo.getDatesByType().put(typeCode, new Date());
+                reloadInfo.getDatesByType().put(this.getTypeCode(), new Date());
             } else {
                 reloadInfo.setDate(new Date());
             }
