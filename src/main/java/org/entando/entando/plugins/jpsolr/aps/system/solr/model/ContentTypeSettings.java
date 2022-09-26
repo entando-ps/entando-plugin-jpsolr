@@ -68,13 +68,13 @@ public class ContentTypeSettings implements Serializable {
                 || ((attribute instanceof DateAttribute || attribute instanceof NumberAttribute) && attribute.isSearchable())) {
             String type = null;
             if (attribute instanceof DateAttribute) {
-                type = "pdates";
+                type = SolrFields.TYPE_PDATES;
             } else if (attribute instanceof NumberAttribute) {
-                type = "plongs";
+                type = SolrFields.TYPE_PLONGS;
             } else if (attribute instanceof BooleanAttribute) {
-                type = "boolean";
+                type = SolrFields.TYPE_BOOLEAN;
             } else {
-                type = "text_gen_sort";
+                type = SolrFields.TYPE_TEXT_GENERAL_SORT;
             }
             Map<String, Object> newField = new HashMap<>();
             newField.put("type", type);

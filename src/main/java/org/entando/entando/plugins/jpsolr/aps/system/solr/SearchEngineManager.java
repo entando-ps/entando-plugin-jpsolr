@@ -160,14 +160,14 @@ public class SearchEngineManager extends com.agiletec.plugins.jacms.aps.system.s
     }
     
     private void refreshBaseFields(List<Map<String, Object>> fields, Map<String, Map<String, Object>> checkedFields) {
-        this.checkField(fields, checkedFields, SolrFields.SOLR_CONTENT_ID_FIELD_NAME, "string");
-        this.checkField(fields, checkedFields, SolrFields.SOLR_CONTENT_TYPE_CODE_FIELD_NAME, "text_general");
-        this.checkField(fields, checkedFields, SolrFields.SOLR_CONTENT_GROUP_FIELD_NAME, "text_general", true);
-        this.checkField(fields, checkedFields, SolrFields.SOLR_CONTENT_DESCRIPTION_FIELD_NAME, "text_gen_sort");
-        this.checkField(fields, checkedFields, SolrFields.SOLR_CONTENT_MAIN_GROUP_FIELD_NAME, "text_general");
-        this.checkField(fields, checkedFields, SolrFields.SOLR_CONTENT_CATEGORY_FIELD_NAME, "text_general", true);
-        this.checkField(fields, checkedFields, SolrFields.SOLR_CONTENT_CREATION_FIELD_NAME, "pdate", false);
-        this.checkField(fields, checkedFields, SolrFields.SOLR_CONTENT_LAST_MODIFY_FIELD_NAME, "pdate", false);
+        this.checkField(fields, checkedFields, SolrFields.SOLR_CONTENT_ID_FIELD_NAME, SolrFields.TYPE_STRING);
+        this.checkField(fields, checkedFields, SolrFields.SOLR_CONTENT_TYPE_CODE_FIELD_NAME, SolrFields.TYPE_TEXT_GENERAL);
+        this.checkField(fields, checkedFields, SolrFields.SOLR_CONTENT_GROUP_FIELD_NAME, SolrFields.TYPE_TEXT_GENERAL, true);
+        this.checkField(fields, checkedFields, SolrFields.SOLR_CONTENT_DESCRIPTION_FIELD_NAME, SolrFields.TYPE_TEXT_GENERAL_SORT);
+        this.checkField(fields, checkedFields, SolrFields.SOLR_CONTENT_MAIN_GROUP_FIELD_NAME, SolrFields.TYPE_TEXT_GENERAL);
+        this.checkField(fields, checkedFields, SolrFields.SOLR_CONTENT_CATEGORY_FIELD_NAME, SolrFields.TYPE_TEXT_GENERAL, true);
+        this.checkField(fields, checkedFields, SolrFields.SOLR_CONTENT_CREATION_FIELD_NAME, SolrFields.TYPE_PDATES, false);
+        this.checkField(fields, checkedFields, SolrFields.SOLR_CONTENT_LAST_MODIFY_FIELD_NAME, SolrFields.TYPE_PDATES, false);
     }
     
     protected void refreshEntityType(List<Map<String, Object>> currentFields, 
@@ -195,13 +195,13 @@ public class SearchEngineManager extends com.agiletec.plugins.jacms.aps.system.s
                 || ((attribute instanceof DateAttribute || attribute instanceof NumberAttribute) && attribute.isSearchable())) {
             String type = null;
             if (attribute instanceof DateAttribute) {
-                type = "pdates";
+                type = SolrFields.TYPE_PDATES;
             } else if (attribute instanceof NumberAttribute) {
-                type = "plongs";
+                type = SolrFields.TYPE_PLONGS;
             } else if (attribute instanceof BooleanAttribute) {
-                type = "boolean";
+                type = SolrFields.TYPE_BOOLEAN;
             } else {
-                type = "text_gen_sort";
+                type = SolrFields.TYPE_TEXT_GENERAL_SORT;
             }
             String fieldName = lang.getCode().toLowerCase() + "_" + attribute.getName();
             fieldName = fieldName.replaceAll(":", "_");
@@ -276,7 +276,7 @@ public class SearchEngineManager extends com.agiletec.plugins.jacms.aps.system.s
         List<Lang> langs = this.getLangManager().getLangs();
         for (int j = 0; j < langs.size(); j++) {
             Lang currentLang = langs.get(j);
-            this.checkField(fields, null, currentLang.getCode(), "text_general", true);
+            this.checkField(fields, null, currentLang.getCode(), SolrFields.TYPE_TEXT_GENERAL, true);
         }
     }
     

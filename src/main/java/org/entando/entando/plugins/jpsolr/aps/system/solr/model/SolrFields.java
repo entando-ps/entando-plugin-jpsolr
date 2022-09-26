@@ -41,5 +41,12 @@ public class SolrFields {
     public static final String SOLR_CONTENT_MAIN_GROUP_FIELD_NAME = SOLR_FIELD_PREFIX + IContentManager.CONTENT_MAIN_GROUP_FILTER_KEY;
     
     public static final String ATTACHMENT_FIELD_SUFFIX = "_attachment";
-
+    
+    public static final String TYPE_STRING = "string";
+    public static final String TYPE_TEXT_GENERAL = "text_general";
+    public static final String TYPE_TEXT_GENERAL_SORT = "text_gen_sort";
+    public static final String TYPE_PDATES = "pdates";
+    public static final String TYPE_PLONGS = "plongs";
+    public static final String TYPE_BOOLEAN = "boolean";
+    
 }
