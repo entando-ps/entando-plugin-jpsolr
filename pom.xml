@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.entando</groupId>
         <artifactId>entando-core-parent</artifactId>
-        <version>7.0.0</version>
+        <version>7.1.0</version>
     </parent>
     <artifactId>entando-plugin-jpsolr</artifactId>
     <groupId>org.entando.entando.plugins</groupId>
@@ -34,6 +34,7 @@
     </repositories>
     <properties>
         <checkstyle.skip>true</checkstyle.skip>
+        <entando-core-bom.version>7.1.0</entando-core-bom.version>
     </properties>
     <build>
         <resources>
@@ -106,7 +107,7 @@
             <dependency>
                 <groupId>org.entando</groupId>
                 <artifactId>entando-core-bom</artifactId>
-                <version>7.0.0</version>
+                <version>${entando-core-bom.version}</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
