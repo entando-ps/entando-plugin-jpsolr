@@ -56,6 +56,7 @@ import org.entando.entando.aps.system.services.searchengine.FacetedContentsResul
 import org.entando.entando.aps.system.services.searchengine.SearchEngineFilter;
 import org.entando.entando.aps.system.services.searchengine.SearchEngineFilter.TextSearchOption;
 import org.entando.entando.plugins.jpsolr.SolrTestUtils;
+import org.entando.entando.plugins.jpsolr.aps.system.solr.model.SolrSearchEngineFilter;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -71,7 +72,7 @@ import org.springframework.mock.web.MockServletContext;
  *
  * @author E.Santoboni
  */
-public class SearchEngineManagerIntegrationTest {
+class SearchEngineManagerIntegrationTest {
 
     private static final String ROLE_FOR_TEST = "jacmstest:date";
 
@@ -118,17 +119,22 @@ public class SearchEngineManagerIntegrationTest {
 
     @AfterAll
     public static void tearDown() throws Exception {
-        IContentManager contentManager = BaseTestCase.getApplicationContext().getBean(IContentManager.class);
-        Content artType = contentManager.createContentType("ART");
-        DateAttribute dateAttrArt = (DateAttribute) artType.getAttribute("Data");
-        dateAttrArt.setRoles(new String[0]);
-        ((IEntityTypesConfigurer) contentManager).updateEntityPrototype(artType);
-        Content evnType = contentManager.createContentType("EVN");
-        DateAttribute dateAttrEnv = (DateAttribute) evnType.getAttribute("DataInizio");
-        dateAttrEnv.setRoles(new String[0]);
-        ((IEntityTypesConfigurer) contentManager).updateEntityPrototype(evnType);
-        BaseTestCase.tearDown();
-        SolrTestUtils.stopContainer();
+        try {
+            IContentManager contentManager = BaseTestCase.getApplicationContext().getBean(IContentManager.class);
+            Content artType = contentManager.createContentType("ART");
+            DateAttribute dateAttrArt = (DateAttribute) artType.getAttribute("Data");
+            dateAttrArt.setRoles(new String[0]);
+            ((IEntityTypesConfigurer) contentManager).updateEntityPrototype(artType);
+            Content evnType = contentManager.createContentType("EVN");
+            DateAttribute dateAttrEnv = (DateAttribute) evnType.getAttribute("DataInizio");
+            dateAttrEnv.setRoles(new String[0]);
+            ((IEntityTypesConfigurer) contentManager).updateEntityPrototype(evnType);
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            SolrTestUtils.stopContainer();
+            BaseTestCase.tearDown();
+        }
     }
 
     @BeforeEach
@@ -148,9 +154,9 @@ public class SearchEngineManagerIntegrationTest {
     protected void dispose() throws Exception {
         SolrTestUtils.waitThreads(ICmsSearchEngineManager.RELOAD_THREAD_NAME_PREFIX);
     }
-
+    
     @Test
-    public void testSearchAllContents() throws Throwable {
+    void testSearchAllContents() throws Throwable {
         try {
             Thread thread = this.searchEngineManager.startReloadContentsReferences();
             thread.join();
@@ -169,7 +175,7 @@ public class SearchEngineManagerIntegrationTest {
     }
     
     @Test
-    public void testSearchContentsId_1() throws Throwable {
+    void testSearchContentsId_1() throws Throwable {
         Content content_1 = this.createContent_1();
         Content content_2 = this.createContent_2();
         try {
@@ -193,7 +199,7 @@ public class SearchEngineManagerIntegrationTest {
     }
 
     @Test
-    public void testSearchContentsId_2() throws Throwable {
+    void testSearchContentsId_2() throws Throwable {
         try {
             Thread thread = this.searchEngineManager.startReloadContentsReferences();
             thread.join();
@@ -224,7 +230,7 @@ public class SearchEngineManagerIntegrationTest {
     }
 
     @Test
-    public void testSearchContentsId_3() throws Throwable {
+    void testSearchContentsId_3() throws Throwable {
         Content content_1 = this.createContent_1();
         Content content_2 = this.createContent_2();
         try {
@@ -251,12 +257,12 @@ public class SearchEngineManagerIntegrationTest {
     }
 
     @Test
-    public void testSearchContentsId_4() throws Throwable {
+    void testSearchContentsId_4() throws Throwable {
         try {
             Thread thread = this.searchEngineManager.startReloadContentsReferences();
             thread.join();
             SearchEngineManager sem = (SearchEngineManager) this.searchEngineManager;
-            SearchEngineFilter filterByType = new SearchEngineFilter(IIndexerDAO.CONTENT_TYPE_FIELD_NAME, "ART");
+            SearchEngineFilter filterByType = new SearchEngineFilter(IContentManager.ENTITY_TYPE_CODE_FILTER_KEY, "ART");
             SearchEngineFilter[] filters = {filterByType};
             List<String> allowedGroup = new ArrayList<>();
             allowedGroup.add(Group.FREE_GROUP_NAME);
@@ -275,9 +281,9 @@ public class SearchEngineManagerIntegrationTest {
             throw t;
         }
     }
-
+    
     @Test
-    public void testSearchContentsId_5() throws Throwable {
+    void testSearchContentsId_5() throws Throwable {
         try {
             Thread thread = this.searchEngineManager.startReloadContentsReferences();
             thread.join();
@@ -304,9 +310,9 @@ public class SearchEngineManagerIntegrationTest {
             throw t;
         }
     }
-
+    
     @Test
-    public void testSearchContentsId_5_allowdValues() throws Throwable {
+    void testSearchContentsId_5_allowdValues() throws Throwable {
         try {
             Thread thread = this.searchEngineManager.startReloadContentsReferences();
             thread.join();
@@ -332,9 +338,9 @@ public class SearchEngineManagerIntegrationTest {
             throw t;
         }
     }
-
+    
     @Test
-    public void testSearchContentsId_6() throws Throwable {
+    void testSearchContentsId_6() throws Throwable {
         try {
             Thread thread = this.searchEngineManager.startReloadContentsReferences();
             thread.join();
@@ -354,7 +360,7 @@ public class SearchEngineManagerIntegrationTest {
     }
 
     @Test
-    public void testSearchContentsId_7() throws Throwable {
+    void testSearchContentsId_7() throws Throwable {
         Content content_1 = this.createContent_1();
         Content content_2 = this.createContent_2();
         Content content_3 = this.createContent_3();
@@ -427,7 +433,7 @@ public class SearchEngineManagerIntegrationTest {
     }
 
     @Test
-    public void testSearchContentsId_7_like() throws Throwable {
+    void testSearchContentsId_7_like() throws Throwable {
         Content content_1 = this.createContent_1();
         this.searchEngineManager.addEntityToIndex(content_1);
         Content content_2 = this.createContent_2();
@@ -489,9 +495,9 @@ public class SearchEngineManagerIntegrationTest {
             this.waitForSearchEngine();
         }
     }
-    
+
     @Test
-    public void testSearchContentsId_8() throws Throwable {
+    void testSearchContentsId_8() throws Throwable {
         SearchEngineManager sem = (SearchEngineManager) this.searchEngineManager;
         List<String> allowedGroup = new ArrayList<>();
         allowedGroup.add(Group.ADMINS_GROUP_NAME);
@@ -598,7 +604,7 @@ public class SearchEngineManagerIntegrationTest {
             this.executeTestByStringRange(allowedGroup, "D", "J", ids, 3, 7);
             this.executeTestByStringRange(allowedGroup, null, "O", ids, 0, 15);
             this.executeTestByStringRange(allowedGroup, "I", null, ids, 8, 18);
-            
+
             SearchEngineFilter filterAllowedValues = SearchEngineFilter.createAllowedValuesFilter("Test", true, Arrays.asList(new String[]{"AA", "FF", "SS", "LL"}), TextSearchOption.ALL_WORDS);
             SearchEngineFilter[] filters_2 = {filterByType, filterAllowedValues};
             List<String> contentsId_2 = sem.searchEntityId(filters_2, null, allowedGroup);
@@ -620,7 +626,7 @@ public class SearchEngineManagerIntegrationTest {
             }
         }
     }
-    
+
     private void executeTestByStringRange(List<String> allowedGroup,
             String start, String end, List<String> total, int startIndex, int expectedSize) throws Exception {
         SearchEngineManager sem = (SearchEngineManager) this.searchEngineManager;
@@ -644,7 +650,7 @@ public class SearchEngineManagerIntegrationTest {
     }
     
     @Test
-    public void testSearchContentsId_10() throws Throwable {
+    void testSearchContentsId_10() throws Throwable {
         SearchEngineManager sem = (SearchEngineManager) this.searchEngineManager;
         List<String> allowedGroup = new ArrayList<>();
         allowedGroup.add(Group.ADMINS_GROUP_NAME);
@@ -733,9 +739,9 @@ public class SearchEngineManagerIntegrationTest {
             assertEquals(contentsId_1.get(i), contentsId_2_en.get(contentsId_2_en.size() - i - 1));
         }
     }
-
+    
     @Test
-    public void testSearchContentsId_11() throws Throwable {
+    void testSearchContentsId_11() throws Throwable {
         SearchEngineManager sem = (SearchEngineManager) this.searchEngineManager;
         List<String> allowedGroup = new ArrayList<>();
         allowedGroup.add(Group.ADMINS_GROUP_NAME);
@@ -819,7 +825,7 @@ public class SearchEngineManagerIntegrationTest {
     }
 
     @Test
-    public void testFacetedAllContents() throws Throwable {
+    void testFacetedAllContents() throws Throwable {
         try {
             Thread thread = this.searchEngineManager.startReloadContentsReferences();
             thread.join();
@@ -838,9 +844,9 @@ public class SearchEngineManagerIntegrationTest {
             throw t;
         }
     }
-
+    
     @Test
-    public void testSearchFacetedContents_1() throws Throwable {
+    void testSearchFacetedContents_1() throws Throwable {
         try {
             Thread thread = this.searchEngineManager.startReloadContentsReferences();
             thread.join();
@@ -861,14 +867,14 @@ public class SearchEngineManagerIntegrationTest {
             throw t;
         }
     }
-    
+
     private void verify(List<String> contentsId, String[] array) {
         assertEquals(array.length, contentsId.size());
         for (int i = 0; i < array.length; i++) {
             assertTrue(contentsId.contains(array[i]));
         }
     }
-
+    
     private Content createContent_1() {
         Content content = new Content();
         content.setId("XXX101");
@@ -930,7 +936,7 @@ public class SearchEngineManagerIntegrationTest {
     }
     
     @Test
-    public void testSearchContentByResource() throws Exception {
+    void testSearchContentByResource() throws Exception {
         Content contentForTest = this.contentManager.loadContent("ALL4", true);
         try {
             contentForTest.setId(null);
@@ -945,6 +951,13 @@ public class SearchEngineManagerIntegrationTest {
             List<String> allowedGroup = new ArrayList<>();
             allowedGroup.add(Group.FREE_GROUP_NAME);
             List<String> contentsId = this.searchEngineManager.searchEntityId("it", "accelerated development", allowedGroup);
+            assertNotNull(contentsId);
+            assertEquals(0, contentsId.size());
+            
+            SolrSearchEngineFilter filter = new SolrSearchEngineFilter("it", false, "accelerated development", TextSearchOption.AT_LEAST_ONE_WORD);
+            filter.setIncludeAttachments(true);
+            filter.setFullTextSearch(true);
+            contentsId = this.searchEngineManager.loadContentsId(new SearchEngineFilter[]{filter}, null, allowedGroup);
             assertNotNull(contentsId);
             assertEquals(1, contentsId.size());
             assertTrue(contentsId.contains(contentForTest.getId()));

@@ -71,6 +71,11 @@ public class SearchEngineDAOFactory implements ISearchEngineDAOFactory, ISolrSea
     }
 
     @Override
+    public boolean deleteAllDocuments() {
+        return SolrSchemaClient.deleteAllDocuments(this.solrAddress, this.solrCore);
+    }
+    
+    @Override
     public boolean checkCurrentSubfolder() throws EntException {
         // nothing to do
         return true;
@@ -78,16 +83,6 @@ public class SearchEngineDAOFactory implements ISearchEngineDAOFactory, ISolrSea
 
     @Override
     public IIndexerDAO getIndexer() throws EntException {
-        return this.getIndexer("");
-    }
-
-    @Override
-    public ISearcherDAO getSearcher() throws EntException {
-        return this.getSearcher("");
-    }
-
-    @Override
-    public IIndexerDAO getIndexer(String subDir) throws EntException {
         IndexerDAO indexerDao = new IndexerDAO();
         indexerDao.setLangManager(this.getLangManager());
         indexerDao.setTreeNodeManager(this.getCategoryManager());
@@ -97,13 +92,24 @@ public class SearchEngineDAOFactory implements ISearchEngineDAOFactory, ISolrSea
     }
 
     @Override
-    public ISearcherDAO getSearcher(String subDir) throws EntException {
+    public ISearcherDAO getSearcher() throws EntException {
         SearcherDAO searcherDao = new SearcherDAO();
         searcherDao.setTreeNodeManager(this.getCategoryManager());
         searcherDao.setLangManager(this.getLangManager());
         searcherDao.setSolrAddress(this.solrAddress);
         searcherDao.setSolrCore(this.solrCore);
         return searcherDao;
+    }
+
+    @Override
+    public IIndexerDAO getIndexer(String subDir) throws EntException {
+        return this.getIndexer();
+    }
+
+    @Deprecated
+    @Override
+    public ISearcherDAO getSearcher(String subDir) throws EntException {
+        return this.getSearcher();
     }
 
     @Override

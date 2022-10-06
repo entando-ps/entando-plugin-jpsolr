@@ -13,6 +13,10 @@
  */
 package org.entando.entando.plugins.jpsolr.aps.system.solr;
 
+import static com.agiletec.plugins.jacms.aps.system.services.searchengine.ICmsSearchEngineManager.STATUS_NEED_TO_RELOAD_INDEXES;
+import static com.agiletec.plugins.jacms.aps.system.services.searchengine.ICmsSearchEngineManager.STATUS_READY;
+import static com.agiletec.plugins.jacms.aps.system.services.searchengine.ICmsSearchEngineManager.STATUS_RELOADING_INDEXES_IN_PROGRESS;
+
 import org.entando.entando.plugins.jpsolr.aps.system.solr.model.SolrFields;
 import com.agiletec.aps.system.common.IManager;
 import com.agiletec.aps.system.common.entity.event.EntityTypesChangingEvent;
@@ -25,17 +29,25 @@ import com.agiletec.aps.system.common.entity.model.attribute.NumberAttribute;
 import com.agiletec.aps.system.common.searchengine.IndexableAttributeInterface;
 import com.agiletec.aps.system.services.lang.ILangManager;
 import com.agiletec.aps.system.services.lang.Lang;
+import com.agiletec.aps.util.DateConverter;
 import com.agiletec.plugins.jacms.aps.system.services.content.event.PublicContentChangedObserver;
 import com.agiletec.plugins.jacms.aps.system.services.content.model.Content;
+import com.agiletec.plugins.jacms.aps.system.services.searchengine.ICmsSearchEngineManager;
+import com.agiletec.plugins.jacms.aps.system.services.searchengine.IIndexerDAO;
+import com.agiletec.plugins.jacms.aps.system.services.searchengine.LastReloadInfo;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import org.entando.entando.aps.system.services.searchengine.SearchEngineFilter;
 import org.entando.entando.ent.exception.EntException;
 import org.entando.entando.ent.util.EntLogging.EntLogFactory;
 import org.entando.entando.ent.util.EntLogging.EntLogger;
 import org.entando.entando.plugins.jpsolr.aps.system.solr.model.ContentTypeSettings;
+import org.entando.entando.plugins.jpsolr.aps.system.solr.model.SolrFacetedContentsResult;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -48,27 +60,6 @@ public class SearchEngineManager extends com.agiletec.plugins.jacms.aps.system.s
     
     @Autowired
     private ILangManager langManager;
-    /*
-    @Override
-    public List<Map<String, Object>> getFields() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public boolean addField(Map<String, Object> properties) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public boolean updateField(Map<String, Object> properties) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public boolean deleteField(String fieldName) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-    */
 
     @Override
     public List<ContentTypeSettings> getContentTypesSettings() throws EntException {
@@ -109,6 +100,7 @@ public class SearchEngineManager extends com.agiletec.plugins.jacms.aps.system.s
         try {
             List<Map<String, Object>> fields = ((ISolrSearchEngineDAOFactory) this.getFactory()).getFields();
             this.checkLangFields(fields);
+            this.refreshBaseFields(fields, null);
             List<SmallEntityType> entityTypes = this.getContentManager().getSmallEntityTypes();
             Map<String, Map<String, Object>> checkedFields = new HashMap<>();
             for (int i = 0; i < entityTypes.size(); i++) {
@@ -139,7 +131,7 @@ public class SearchEngineManager extends com.agiletec.plugins.jacms.aps.system.s
     
     private void refreshBaseFields(List<Map<String, Object>> fields, Map<String, Map<String, Object>> checkedFields) {
         this.checkField(fields, checkedFields, SolrFields.SOLR_CONTENT_ID_FIELD_NAME, "string");
-        this.checkField(fields, checkedFields, SolrFields.SOLR_CONTENT_TYPE_FIELD_NAME, "text_general");
+        this.checkField(fields, checkedFields, SolrFields.SOLR_CONTENT_TYPE_CODE_FIELD_NAME, "text_general");
         this.checkField(fields, checkedFields, SolrFields.SOLR_CONTENT_GROUP_FIELD_NAME, "text_general", true);
         this.checkField(fields, checkedFields, SolrFields.SOLR_CONTENT_DESCRIPTION_FIELD_NAME, "text_gen_sort");
         this.checkField(fields, checkedFields, SolrFields.SOLR_CONTENT_MAIN_GROUP_FIELD_NAME, "text_general");
@@ -240,6 +232,7 @@ public class SearchEngineManager extends com.agiletec.plugins.jacms.aps.system.s
         super.updateFromEntityTypesChanging(event);
         List<Map<String, Object>> fields = ((ISolrSearchEngineDAOFactory) this.getFactory()).getFields();
         this.checkLangFields(fields);
+        this.refreshBaseFields(fields, null);
         if (((IManager) this.getContentManager()).getName().equals(event.getEntityManagerName()) 
                 && event.getOperationCode() != EntityTypesChangingEvent.REMOVE_OPERATION_CODE) {
             String typeCode = event.getNewEntityType().getTypeCode();
@@ -253,6 +246,55 @@ public class SearchEngineManager extends com.agiletec.plugins.jacms.aps.system.s
             Lang currentLang = langs.get(j);
             this.checkField(fields, null, currentLang.getCode(), "text_general", true);
         }
+    }
+    
+    @Override
+    public Thread startReloadContentsReferencesByType(String typeCode) throws EntException {
+        return this.startReloadContentsReferencesPrivate(typeCode);
+    }
+
+    @Override
+    public Thread startReloadContentsReferences() throws EntException {
+        ((ISolrSearchEngineDAOFactory) this.getFactory()).deleteAllDocuments();
+        return this.startReloadContentsReferencesPrivate(null);
+    }
+
+    private Thread startReloadContentsReferencesPrivate(String typeCode) throws EntException {
+        SolrIndexLoaderThread loaderThread = null;
+        if (this.getStatus() == STATUS_READY || this.getStatus() == STATUS_NEED_TO_RELOAD_INDEXES) {
+            try {
+                IIndexerDAO newIndexer = this.getFactory().getIndexer();
+                loaderThread = new SolrIndexLoaderThread(typeCode, this, this.getContentManager(), newIndexer);
+                String threadName = ICmsSearchEngineManager.RELOAD_THREAD_NAME_PREFIX 
+                        + DateConverter.getFormattedDate(new Date(), "yyyyMMddHHmmss")
+                        + typeCode;
+                loaderThread.setName(threadName);
+                this.setStatus(STATUS_RELOADING_INDEXES_IN_PROGRESS);
+                loaderThread.start();
+                logger.info("Reload Contents References job started");
+            } catch (Throwable t) {
+                throw new EntException("Error reloading Contents References", t);
+            }
+        } else {
+            logger.info("Reload Contents References job suspended: current status: {}", this.getStatus());
+        }
+        return loaderThread;
+    }
+    
+    @Override
+    public SolrFacetedContentsResult searchFacetedEntities(SearchEngineFilter[][] filters, 
+            SearchEngineFilter[] categories, Collection<String> allowedGroups) throws EntException {
+        return ((ISolrSearcherDAO) this.getSearcherDao()).searchFacetedContents(filters, categories, allowedGroups);
+    }
+
+    @Override
+    protected void notifyEndingIndexLoading(LastReloadInfo info, IIndexerDAO newIndexerDAO) {
+        super.notifyEndingIndexLoading(info, newIndexerDAO);
+    }
+
+    @Override
+    protected void sellOfQueueEvents() {
+        super.sellOfQueueEvents();
     }
 
     protected ILangManager getLangManager() {

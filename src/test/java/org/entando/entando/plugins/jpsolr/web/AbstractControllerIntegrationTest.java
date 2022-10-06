@@ -19,7 +19,6 @@ import javax.annotation.Resource;
 import com.agiletec.aps.system.services.authorization.IAuthorizationManager;
 import com.agiletec.aps.system.services.user.IAuthenticationProviderManager;
 import com.agiletec.aps.system.services.user.UserDetails;
-import javax.servlet.Filter;
 import org.entando.entando.TestEntandoJndiUtils;
 import org.entando.entando.aps.system.services.oauth2.IApiOAuth2TokenManager;
 import org.entando.entando.web.AuthRequestBuilder;
@@ -49,7 +48,8 @@ import org.springframework.web.filter.CorsFilter;
     "classpath*:spring/apsadmin/**/**.xml",
     "classpath*:spring/plugins/**/aps/**/**.xml",
     "classpath*:spring/plugins/**/apsadmin/**/**.xml",
-    "classpath*:spring/plugins/jpsolr/aps/baseManagersConfig.xml", //extension of default class
+        "classpath*:spring/plugins/jpsolr/aps/**.xml", //extension of default class
+        "classpath*:spring/plugins/jpsolr/apsadmin/**.xml", //extension of default class
     "classpath*:spring/web/**.xml",})
 @WebAppConfiguration(value = "")
 public class AbstractControllerIntegrationTest {
