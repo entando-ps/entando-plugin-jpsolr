@@ -257,20 +257,21 @@ public class SearcherDAO implements ISolrSearcherDAO {
                 if (null != allowedValues && !allowedValues.isEmpty()) {
                     BooleanQuery.Builder singleCategoriesQuery = new BooleanQuery.Builder();
                     for (int j = 0; j < allowedValues.size(); j++) {
-                        String singleCategory = allowedValues.get(j);
-                        ITreeNode treeNode = this.getTreeNodeManager().getNode(singleCategory);
-                        if (null != treeNode) {
-                            TermQuery categoryQuery = new TermQuery(new Term(SolrFields.SOLR_CONTENT_CATEGORY_FIELD_NAME, treeNode.getCode()));
-                            singleCategoriesQuery.add(categoryQuery, BooleanClause.Occur.SHOULD);
+                        String singleCategory = allowedValues.get(j).toLowerCase();
+                        if (null == this.getTreeNodeManager().getNode(singleCategory)) {
+                            logger.warn("Search for null category - code '" + singleCategory + "'");
                         }
+                        TermQuery categoryQuery = new TermQuery(new Term(SolrFields.SOLR_CONTENT_CATEGORY_FIELD_NAME, singleCategory));
+                        singleCategoriesQuery.add(categoryQuery, BooleanClause.Occur.SHOULD);
                     }
                     categoriesQuery.add(singleCategoriesQuery.build(), BooleanClause.Occur.MUST);
                 } else if (null != categoryFilter.getValue()) {
-                    ITreeNode treeNode = this.getTreeNodeManager().getNode(categoryFilter.getValue().toString());
-                    if (null != treeNode) {
-                        TermQuery categoryQuery = new TermQuery(new Term(SolrFields.SOLR_CONTENT_CATEGORY_FIELD_NAME, treeNode.getCode()));
-                        categoriesQuery.add(categoryQuery, BooleanClause.Occur.MUST);
+                    String categoryCode = categoryFilter.getValue().toString().toLowerCase();
+                    if (null == this.getTreeNodeManager().getNode(categoryCode)) {
+                        logger.warn("Search for null category - code '" + categoryCode + "'");
                     }
+                    TermQuery categoryQuery = new TermQuery(new Term(SolrFields.SOLR_CONTENT_CATEGORY_FIELD_NAME, categoryCode));
+                    categoriesQuery.add(categoryQuery, BooleanClause.Occur.MUST);
                 }
             }
             mainQuery.add(categoriesQuery.build(), BooleanClause.Occur.MUST);
