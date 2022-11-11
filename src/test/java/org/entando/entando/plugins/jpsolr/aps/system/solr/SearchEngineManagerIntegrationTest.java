@@ -44,7 +44,6 @@ import com.agiletec.plugins.jacms.aps.system.services.content.model.attribute.At
 import com.agiletec.plugins.jacms.aps.system.services.resource.IResourceManager;
 import com.agiletec.plugins.jacms.aps.system.services.resource.model.ResourceInterface;
 import com.agiletec.plugins.jacms.aps.system.services.searchengine.ICmsSearchEngineManager;
-import com.agiletec.plugins.jacms.aps.system.services.searchengine.IIndexerDAO;
 import com.agiletec.plugins.jacms.aps.system.services.searchengine.NumericSearchEngineFilter;
 import com.agiletec.plugins.jacms.aps.system.services.searchengine.SearchEngineManager;
 import java.math.BigDecimal;
@@ -867,7 +866,7 @@ class SearchEngineManagerIntegrationTest {
             throw t;
         }
     }
-
+    
     private void verify(List<String> contentsId, String[] array) {
         assertEquals(array.length, contentsId.size());
         for (int i = 0; i < array.length; i++) {

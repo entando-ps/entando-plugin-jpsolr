@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.entando.entando.aps.system.services.searchengine.FacetedContentsResult;
 import org.entando.entando.aps.system.services.searchengine.SearchEngineFilter;
+import org.entando.entando.plugins.jpsolr.CustomBaseTestCase;
 import org.entando.entando.plugins.jpsolr.SolrTestUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -54,7 +55,9 @@ public class FacetSearchEngineManagerIntegrationTest {
     @BeforeAll
     public static void startUp() throws Exception {
         SolrTestUtils.startContainer();
-        BaseTestCase.setUp();
+        CustomBaseTestCase.setUp();
+        ISolrSearchEngineManager solrSearchEngineManager = CustomBaseTestCase.getApplicationContext().getBean(ISolrSearchEngineManager.class);
+        solrSearchEngineManager.refreshCmsFields();
     }
     
     @AfterAll
@@ -244,7 +247,7 @@ public class FacetSearchEngineManagerIntegrationTest {
             assertEquals(contents1.get(i), contents2.get(contents2.size() - 1 - i));
         }
     }
-
+    
     @Test
     public void testSearchContentsByRole_2() throws Exception {
         Thread thread = this.searchEngineManager.startReloadContentsReferences();

@@ -37,6 +37,7 @@ import java.util.Date;
 import java.util.stream.Collectors;
 import org.entando.entando.aps.system.services.searchengine.FacetedContentsResult;
 import org.entando.entando.aps.system.services.searchengine.SearchEngineFilter;
+import org.entando.entando.plugins.jpsolr.CustomBaseTestCase;
 import org.entando.entando.plugins.jpsolr.SolrTestUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -58,7 +59,9 @@ public class AdvContentSearchTest /*extends BaseTestCase*/ {
     @BeforeAll
     public static void startUp() throws Exception {
         SolrTestUtils.startContainer();
-        BaseTestCase.setUp();
+        CustomBaseTestCase.setUp();
+        ISolrSearchEngineManager solrSearchEngineManager = CustomBaseTestCase.getApplicationContext().getBean(ISolrSearchEngineManager.class);
+        solrSearchEngineManager.refreshCmsFields();
     }
     
     @AfterAll
