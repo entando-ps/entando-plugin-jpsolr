@@ -13,6 +13,7 @@
  */
 package org.entando.entando.plugins.jpsolr.aps.system.solr;
 
+import com.agiletec.aps.system.EntThreadLocal;
 import org.entando.entando.plugins.jpsolr.aps.system.solr.model.SolrFields;
 import com.agiletec.aps.system.common.IManager;
 import com.agiletec.aps.system.common.entity.event.EntityTypesChangingEvent;
@@ -30,6 +31,7 @@ import com.agiletec.plugins.jacms.aps.system.services.content.event.PublicConten
 import com.agiletec.plugins.jacms.aps.system.services.content.model.Content;
 import com.agiletec.plugins.jacms.aps.system.services.searchengine.ICmsSearchEngineManager;
 import com.agiletec.plugins.jacms.aps.system.services.searchengine.IIndexerDAO;
+import com.agiletec.plugins.jacms.aps.system.services.searchengine.ISearcherDAO;
 import com.agiletec.plugins.jacms.aps.system.services.searchengine.LastReloadInfo;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,8 +40,12 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
+import org.entando.entando.aps.system.services.cache.ICacheInfoManager;
 import org.entando.entando.aps.system.services.searchengine.SearchEngineFilter;
+import org.entando.entando.aps.system.services.tenant.ITenantManager;
 import org.entando.entando.ent.exception.EntException;
+import org.entando.entando.ent.exception.EntRuntimeException;
 import org.entando.entando.ent.util.EntLogging.EntLogFactory;
 import org.entando.entando.ent.util.EntLogging.EntLogger;
 import org.entando.entando.plugins.jpsolr.aps.system.solr.model.ContentTypeSettings;
@@ -53,10 +59,40 @@ public class SearchEngineManager extends com.agiletec.plugins.jacms.aps.system.s
         implements ISolrSearchEngineManager, PublicContentChangedObserver, EntityTypesChangingObserver {
 
     private static final EntLogger logger = EntLogFactory.getSanitizedLogger(SearchEngineManager.class);
+    
+    private static final String LAST_RELOAD_CACHE_PARAM_NAME = "SolrSearchEnhine_lastReloadInfo";
 
     @Autowired
     private ILangManager langManager;
+    
+    @Autowired
+    private ICacheInfoManager cacheInfoManager;
+    
+    @Override
+    public void init() throws Exception {
+        logger.debug("{} ready. Initialized", this.getClass().getName());
+    }
+    
+    @Override
+    protected ISearcherDAO getSearcherDao() {
+        try {
+            return this.getFactory().getSearcher();
+        } catch (Exception e) {
+            logger.error("Error extracting searcher", e);
+            throw new EntRuntimeException("Error extracting searcher", e);
+        }
+    }
 
+    @Override
+    protected IIndexerDAO getIndexerDao() {
+        try {
+            return this.getFactory().getIndexer();
+        } catch (Exception e) {
+            logger.error("Error extracting indexer", e);
+            throw new EntRuntimeException("Error extracting indexer", e);
+        }
+    }
+    
     @Override
     public List<ContentTypeSettings> getContentTypesSettings() throws EntException {
         List<ContentTypeSettings> list = new ArrayList<>();
@@ -100,9 +136,7 @@ public class SearchEngineManager extends com.agiletec.plugins.jacms.aps.system.s
             List<SmallEntityType> entityTypes = this.getContentManager().getSmallEntityTypes();
             Map<String, Map<String, Object>> checkedFields = new HashMap<>();
             for (int i = 0; i < entityTypes.size(); i++) {
-                if (i == 0) {
-                    this.refreshBaseFields(fields, checkedFields);
-                }
+                fields = ((ISolrSearchEngineDAOFactory) this.getFactory()).getFields();
                 SmallEntityType entityType = entityTypes.get(i);
                 this.refreshEntityType(fields, checkedFields, entityType.getCode());
             }
@@ -245,7 +279,7 @@ public class SearchEngineManager extends com.agiletec.plugins.jacms.aps.system.s
             this.checkField(fields, null, currentLang.getCode(), SolrFields.TYPE_TEXT_GENERAL, true);
         }
     }
-
+    
     @Override
     public Thread startReloadContentsReferencesByType(String typeCode) throws EntException {
         return this.startReloadContentsReferencesPrivate(typeCode);
@@ -263,7 +297,7 @@ public class SearchEngineManager extends com.agiletec.plugins.jacms.aps.system.s
             try {
                 IIndexerDAO newIndexer = this.getFactory().getIndexer();
                 loaderThread = new SolrIndexLoaderThread(typeCode, this, this.getContentManager(), newIndexer);
-                String threadName = ICmsSearchEngineManager.RELOAD_THREAD_NAME_PREFIX
+                String threadName = ICmsSearchEngineManager.RELOAD_THREAD_NAME_PREFIX 
                         + DateConverter.getFormattedDate(new Date(), "yyyyMMddHHmmss")
                         + typeCode;
                 loaderThread.setName(threadName);
@@ -284,10 +318,24 @@ public class SearchEngineManager extends com.agiletec.plugins.jacms.aps.system.s
             SearchEngineFilter[] categories, Collection<String> allowedGroups) throws EntException {
         return ((ISolrSearcherDAO) this.getSearcherDao()).searchFacetedContents(filters, categories, allowedGroups);
     }
-
+    
     @Override
     protected void notifyEndingIndexLoading(LastReloadInfo info, IIndexerDAO newIndexerDAO) {
-        super.notifyEndingIndexLoading(info, newIndexerDAO);
+        this.getCacheInfoManager().putInCache(ICacheInfoManager.DEFAULT_CACHE_NAME, this.getLastReloadCacheKey(), info);
+        if (this.getStatus() != STATUS_NEED_TO_RELOAD_INDEXES) {
+            this.setStatus(STATUS_READY);
+        }
+    }
+
+    @Override
+    public LastReloadInfo getLastReloadInfo() {
+        return (SolrLastReloadInfo) this.getCacheInfoManager().getFromCache(ICacheInfoManager.DEFAULT_CACHE_NAME, this.getLastReloadCacheKey());
+    }
+    
+    private String getLastReloadCacheKey() {
+        String tenantCode = (String) EntThreadLocal.get(ITenantManager.THREAD_LOCAL_TENANT_CODE);
+        String suffix = (StringUtils.isBlank(tenantCode)) ? "_primary_" : tenantCode;
+        return LAST_RELOAD_CACHE_PARAM_NAME + "_" + suffix;
     }
 
     @Override
@@ -302,4 +350,11 @@ public class SearchEngineManager extends com.agiletec.plugins.jacms.aps.system.s
         this.langManager = langManager;
     }
 
+    protected ICacheInfoManager getCacheInfoManager() {
+        return cacheInfoManager;
+    }
+    public void setCacheInfoManager(ICacheInfoManager cacheInfoManager) {
+        this.cacheInfoManager = cacheInfoManager;
+    }
+    
 }

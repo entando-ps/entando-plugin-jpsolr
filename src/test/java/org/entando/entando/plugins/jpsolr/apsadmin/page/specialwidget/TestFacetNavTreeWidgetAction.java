@@ -25,7 +25,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.agiletec.aps.system.services.page.Widget;
-import com.agiletec.apsadmin.ApsAdminBaseTestCase;
 import com.agiletec.plugins.jacms.aps.system.services.content.model.SmallContentType;
 import com.opensymphony.xwork2.Action;
 import java.util.HashMap;
@@ -35,6 +34,9 @@ import org.entando.entando.plugins.jpsolr.apsadmin.ApsAdminPluginBaseTestCase;
 import org.entando.entando.plugins.jpsolr.apsadmin.portal.specialwidget.FacetNavTreeWidgetAction;
 import org.junit.jupiter.api.Test;
 
+/**
+ * @author E.Santoboni
+ */
 public class TestFacetNavTreeWidgetAction extends ApsAdminPluginBaseTestCase {
     
 	@Test

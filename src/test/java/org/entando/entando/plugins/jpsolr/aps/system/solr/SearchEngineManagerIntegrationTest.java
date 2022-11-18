@@ -36,7 +36,6 @@ import com.agiletec.aps.system.common.tree.ITreeNode;
 import com.agiletec.aps.system.services.category.Category;
 import com.agiletec.aps.system.services.category.ICategoryManager;
 import com.agiletec.aps.system.services.group.Group;
-import com.agiletec.aps.system.services.lang.ILangManager;
 import com.agiletec.aps.util.DateConverter;
 import com.agiletec.plugins.jacms.aps.system.services.content.IContentManager;
 import com.agiletec.plugins.jacms.aps.system.services.content.model.Content;
@@ -74,8 +73,7 @@ import org.springframework.mock.web.MockServletContext;
 class SearchEngineManagerIntegrationTest {
 
     private static final String ROLE_FOR_TEST = "jacmstest:date";
-
-    private ILangManager langManager = null;
+    
     private IContentManager contentManager = null;
     private IResourceManager resourceManager = null;
     private ICmsSearchEngineManager searchEngineManager = null;
@@ -139,7 +137,6 @@ class SearchEngineManagerIntegrationTest {
     @BeforeEach
     protected void init() throws Exception {
         try {
-            this.langManager = getApplicationContext().getBean(ILangManager.class);
             this.contentManager = getApplicationContext().getBean(IContentManager.class);
             this.resourceManager = getApplicationContext().getBean(IResourceManager.class);
             this.searchEngineManager = getApplicationContext().getBean(ICmsSearchEngineManager.class);
@@ -586,6 +583,9 @@ class SearchEngineManagerIntegrationTest {
                 textAttribute.setText((c + c).toUpperCase(), "en"); // note: search by single term
                 this.contentManager.insertOnLineContent(content);
                 ids.add(content.getId());
+                synchronized (this) {
+                    this.wait(500);
+                }
             }
             synchronized (this) {
                 this.wait(3000);
@@ -663,7 +663,8 @@ class SearchEngineManagerIntegrationTest {
             newNumberAttribute.setIndexingType(IndexableAttributeInterface.INDEXING_TYPE_TEXT);
             artType.addAttribute(newNumberAttribute);
             ((IEntityTypesConfigurer) this.contentManager).updateEntityPrototype(artType);
-
+            this.waitForSearchEngine();
+            
             for (int i = 0; i < 30; i++) {
                 Content content = this.contentManager.loadContent("ART104", true);
                 content.setId(null);
@@ -716,7 +717,7 @@ class SearchEngineManagerIntegrationTest {
             this.waitForSearchEngine();
         }
     }
-
+    
     private void executeTestByNumberRange(List<String> allowedGroup,
             Number start, Number end, List<String> total, int startIndex, int expectedSize) throws Exception {
         SearchEngineManager sem = (SearchEngineManager) this.searchEngineManager;

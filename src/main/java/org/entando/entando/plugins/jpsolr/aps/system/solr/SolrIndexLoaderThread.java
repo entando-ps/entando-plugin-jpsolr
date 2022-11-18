@@ -1,9 +1,19 @@
 /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ * Copyright 2015-Present Entando Inc. (http://www.entando.com) All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
  */
 package org.entando.entando.plugins.jpsolr.aps.system.solr;
 
+import com.agiletec.aps.system.EntThread;
 import com.agiletec.aps.system.common.entity.model.EntitySearchFilter;
 import com.agiletec.plugins.jacms.aps.system.services.content.IContentManager;
 import com.agiletec.plugins.jacms.aps.system.services.content.model.Content;
@@ -16,9 +26,9 @@ import org.entando.entando.ent.util.EntLogging.EntLogFactory;
 import org.entando.entando.ent.util.EntLogging.EntLogger;
 
 /**
- * @author eu
+ * @author E.Santoboni
  */
-public class SolrIndexLoaderThread extends Thread {
+public class SolrIndexLoaderThread extends EntThread {
 
 	private static final EntLogger _logger = EntLogFactory.getSanitizedLogger(SolrIndexLoaderThread.class);
 
@@ -31,6 +41,7 @@ public class SolrIndexLoaderThread extends Thread {
 	
 	public SolrIndexLoaderThread(String typeCode, SearchEngineManager searchEngineManager, 
 			IContentManager contentManager, IIndexerDAO indexerDao) {
+        super();
 		this._contentManager = contentManager;
 		this._searchEngineManager = searchEngineManager;
 		this._indexerDao = indexerDao;
@@ -39,8 +50,11 @@ public class SolrIndexLoaderThread extends Thread {
 	
 	@Override
 	public void run() {
-        SolrLastReloadInfo reloadInfo = (StringUtils.isBlank(this.getTypeCode()) || (null == this._searchEngineManager.getLastReloadInfo())) ?
-                new SolrLastReloadInfo() : (SolrLastReloadInfo) this._searchEngineManager.getLastReloadInfo();
+        super.applyLocalMap();
+        SolrLastReloadInfo reloadInfo = (SolrLastReloadInfo) this._searchEngineManager.getLastReloadInfo();
+        if (null == reloadInfo) {
+            reloadInfo = new SolrLastReloadInfo();
+        }
 		try {
 			this.loadNewIndex();
 			reloadInfo.setResult(LastReloadInfo.ID_SUCCESS_RESULT);
@@ -49,7 +63,7 @@ public class SolrIndexLoaderThread extends Thread {
 			_logger.error("error in run", t);
 		} finally {
             if (!StringUtils.isBlank(this.getTypeCode())) {
-                reloadInfo.getDatesByType().put(typeCode, new Date());
+                reloadInfo.getDatesByType().put(this.getTypeCode(), new Date());
             } else {
                 reloadInfo.setDate(new Date());
             }

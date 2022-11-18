@@ -17,22 +17,38 @@ import com.agiletec.aps.BaseTestCase;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.entando.entando.plugins.jpsolr.CustomBaseTestCase;
+import javax.servlet.ServletContext;
+import org.entando.entando.plugins.jpsolr.CustomConfigTestUtils;
 import org.entando.entando.plugins.jpsolr.SolrTestUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.ApplicationContext;
+import org.springframework.core.io.FileSystemResourceLoader;
+import org.springframework.mock.web.MockServletContext;
 
 /**
  * @author E.Santoboni
  */
-public class TestSolrSchemaClient {
+class TestSolrSchemaClient {
 
+    private static ApplicationContext applicationContext;
+
+    public static ApplicationContext getApplicationContext() {
+        return applicationContext;
+    }
+
+    public static void setApplicationContext(ApplicationContext applicationContext) {
+        TestSolrSchemaClient.applicationContext = applicationContext;
+    }
+    
     @BeforeAll
     public static void startUp() throws Exception {
         SolrTestUtils.startContainer();
-        CustomBaseTestCase.setUp();
+        ServletContext srvCtx = new MockServletContext("", new FileSystemResourceLoader());
+        applicationContext = new CustomConfigTestUtils().createApplicationContext(srvCtx);
+        setApplicationContext(applicationContext);
     }
     
     @AfterAll
@@ -42,7 +58,7 @@ public class TestSolrSchemaClient {
     }
     
     @Test
-    public void testGetFields() throws Throwable {
+    void testGetFields() throws Throwable {
         String address = System.getenv("SOLR_ADDRESS");
         String core = System.getenv("SOLR_CORE");
         List<Map<String, Object>> fields = SolrSchemaClient.getFields(address, core);
@@ -50,7 +66,7 @@ public class TestSolrSchemaClient {
     }
     
     @Test
-    public void testAddDeleteField() throws Throwable {
+    void testAddDeleteField() throws Throwable {
         String address = System.getenv("SOLR_ADDRESS");
         String core = System.getenv("SOLR_CORE");
         String fieldName = "test_solr";
