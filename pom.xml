@@ -9,7 +9,7 @@
     </parent>
     <artifactId>entando-plugin-jpsolr</artifactId>
     <groupId>org.entando.entando.plugins</groupId>
-    <version>7.1.1-MT</version>
+    <version>7.1.3-MT</version>
     <packaging>war</packaging>
     <name>Entando Plugin: Solr Connector</name>
     <description>Enables the use of Solr as search engine</description>
@@ -35,7 +35,7 @@
     </repositories>
     <properties>
         <checkstyle.skip>true</checkstyle.skip>
-        <entando-core-bom.version>7.1.1-MT</entando-core-bom.version>
+        <entando-core-bom.version>7.1.3-MT</entando-core-bom.version>
     </properties>
     <build>
         <resources>
